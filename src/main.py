@@ -6,8 +6,11 @@ import git
 
 
 # 获取当前程序的路径
-def get_current_path():
-    current_path = os.getcwd()
+def get_current_path(debug):
+    if debug:
+        current_path = r'E:\LearningFile\Python'        # 在这里指定工作目录
+    else:
+        current_path = os.getcwd()
     return current_path
 
 # --------------------------------------- End --------------------------------------- #
@@ -58,16 +61,31 @@ def home_page(lst):
     root.title("GitTool")
 
     # 创建左侧窗格
-    left_frame = ttk.Frame(root, width=200, height=400)
+    left_frame = ttk.Frame(root, width=200, height=500)
     left_frame.pack(side="left")
 
     # 创建右侧窗格
-    right_frame = ttk.Frame(root, width=600, height=400)
+    right_frame = ttk.Frame(root, width=250, height=500)
     right_frame.pack(side="right")
 
     # 创建分割线
     separator = ttk.Separator(root, orient="vertical")
     separator.pack(side="left", fill="y", padx=5)
+
+    # 创建 Canvas 组件
+    canvas = tk.Canvas(right_frame, width=240, height=500)
+    canvas.pack(side="left", fill="both", expand=True)
+
+    # 创建 Scrollbar 组件
+    scrollbar = tk.Scrollbar(right_frame, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+
+    # 将 Scrollbar 组件与 Canvas 组件关联
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    # 创建 Frame 组件
+    frame = tk.Frame(canvas)
+    canvas.create_window((0, 0), window=frame, anchor="nw")
 
     # 用于存储选中的列表项
     selected_items = []
@@ -81,32 +99,27 @@ def home_page(lst):
 
     # 确定按钮单击事件的回调函数
     def on_ok_button_click():
-        for widget in right_frame.winfo_children():
+        for widget in frame.winfo_children():
             widget.destroy()
-        row_count = 0
+
+        max_line = 40
         for folder in selected_items:
-            label_right = tk.Label(right_frame, text=str(folder)+" 所有分支:")
-            label_right.grid(row=row_count, column=0, padx=10, pady=0, sticky="N")
-            row_count += 1
+            label_right = tk.Label(frame, text=str(folder)+" 所有分支:")
+            label_right.pack(padx=20)
             branch_list = get_git_branches(folder)
             if branch_list is not None:
-                label_branch = tk.Label(right_frame, text="\n".join(branch_list))
-                label_branch.grid(row=row_count, column=0, padx=10, pady=0, sticky="N")
-                row_count += len(branch_list)
+                label_branch = tk.Label(frame, text="\n".join(branch_list))
+                label_branch.pack(padx=20)
             else:
-                label_branch = tk.Label(right_frame, text="None")
-                label_branch.grid(row=row_count, column=0, padx=10, pady=0, sticky="N")
-                row_count += 1
+                label_branch = tk.Label(frame, text="None")
+                label_branch.pack(padx=20)
 
-            label_line = tk.Label(right_frame, text="-"*10)
-            label_line.grid(row=row_count, column=0, padx=10, pady=0, sticky="N")
-            row_count += 1
-
-            right_frame.grid_propagate(0)
+            label_line = tk.Label(frame, text="-"*max_line)
+            label_line.pack(padx=20)
 
     # 创建顶部标签
     label = tk.Label(left_frame, text="选择存储库")
-    label.pack(side="top", padx=20, pady=10, anchor="nw")
+    label.pack(side="top", padx=20, pady=10, anchor="center")
 
     # 创建复选框
     for i, item in enumerate(lst):
@@ -125,7 +138,8 @@ def home_page(lst):
 
 # main
 if __name__ == "__main__":
-    now_path = get_current_path()
+    is_debug = True         # 调试时, 请将该变量置为 True, 并在 get_current_path 函数中指定工作目录
+    now_path = get_current_path(is_debug)
 
     # 获取当前路径下的所有一级文件夹
     folder_list = get_folders(now_path)
@@ -133,5 +147,4 @@ if __name__ == "__main__":
     # 开始运行函数
     home_page(folder_list)
 
-    print("end")
 
